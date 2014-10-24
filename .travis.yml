@@ -5,11 +5,12 @@ before_install:
  - ./bin/install-protoc-apt.sh
 
 before_script:
-- protoc --version
+ - protoc --version
 
-script: mvn install -DskipTests=true -B -V --quiet && cd cloudfoundry-client-lib && mvn -P integration-test clean install -Dccng.target=$TARGET
-  -Dccng.email=$EMAIL -Dccng.passwd=$PASSWD -Dccng.org=$ORG -Dccng.space=$SPACE -Dsurefire.useFile=false --quiet
+# script: mvn install -DskipTests=true -B -V --quiet && cd cloudfoundry-client-lib && mvn -P integration-test clean install -Dccng.target=$TARGET -Dccng.email=$EMAIL -Dccng.passwd=$PASSWD -Dccng.org=$ORG -Dccng.space=$SPACE -Dsurefire.useFile=false --quiet
 
+script: cd cloudfoundry-client-lib && mvn -DskipTests=true -B -V --quiet install
+ 
 env:
   global:
   - secure: ! 'CEnlffjCZBVHaO9yXS6Q1cWdorIovujdzAeRuAXBD9MFGnqWxJkACRyfTC2okTamcocisznrI1IPcQajLvNBQhVjgut/vV1Dpneuy1/xySmhNG3bF+CV7GQf/3FrS4yd7Uylpv9SMd3VM+EClDGQ3mR7OT4216+Q+vyE5Lh09WA='

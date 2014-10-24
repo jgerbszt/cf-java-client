@@ -27,7 +27,7 @@
 
 	<properties>
 		<java.version>1.7</java.version>
-		<spring.framework.version>3.2.9.RELEASE</spring.framework.version>
+		<spring.framework.version>4.0.7.RELEASE</spring.framework.version>
 		<spring.security.oauth.version>1.0.5.RELEASE</spring.security.oauth.version>
 		<jackson.version>1.9.3</jackson.version>
 		<tomcat.version>8.0.8</tomcat.version>
@@ -228,7 +228,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.2.5</version>
+			<version>4.3.5</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>

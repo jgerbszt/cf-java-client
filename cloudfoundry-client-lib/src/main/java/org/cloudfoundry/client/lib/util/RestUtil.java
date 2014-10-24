@@ -1,7 +1,9 @@
 package org.cloudfoundry.client.lib.util;
 
-import static org.apache.http.conn.ssl.SSLSocketFactory.STRICT_HOSTNAME_VERIFIER;
+import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.STRICT_HOSTNAME_VERIFIER;
 
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -11,12 +13,11 @@ import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.params.ConnRoutePNames;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.cloudfoundry.client.lib.HttpProxyConfiguration;
 import org.cloudfoundry.client.lib.oauth2.OauthClient;
 import org.cloudfoundry.client.lib.rest.CloudControllerClientImpl;
@@ -48,39 +49,47 @@ public class RestUtil {
 		return restTemplate;
 	}
 
-	public ClientHttpRequestFactory createRequestFactory(HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-		DefaultHttpClient httpClient = (DefaultHttpClient) requestFactory.getHttpClient();
+    public ClientHttpRequestFactory createRequestFactory(
+            HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 
-		if (trustSelfSignedCerts) {
-			registerSslSocketFactory(httpClient);
-		}
-		
-		if (httpProxyConfiguration != null) {
-		    	if (httpProxyConfiguration.isAuthRequired()) {
-        		    	httpClient.getCredentialsProvider().setCredentials(
-        		        	new AuthScope(httpProxyConfiguration.getProxyHost(), httpProxyConfiguration.getProxyPort()),
-        		        	new UsernamePasswordCredentials(httpProxyConfiguration.getUsername(), httpProxyConfiguration.getPassword()));
-			}
-		    
-			HttpHost proxy = new HttpHost(httpProxyConfiguration.getProxyHost(), httpProxyConfiguration.getProxyPort());
-			httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-		}
+        if (trustSelfSignedCerts) {
+            try {
+                SSLContextBuilder sslContextBuilder =
+                        new SSLContextBuilder().loadTrustMaterial(null,
+                                new TrustSelfSignedStrategy());
+                clientBuilder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContextBuilder
+                        .build(), STRICT_HOSTNAME_VERIFIER));
+            } catch (GeneralSecurityException e) {
+                throw new RuntimeException("Cannot create SSL connection factory", e);
+            }
+        }
 
-		return requestFactory;
-	}
+        if (httpProxyConfiguration != null) {
+            if (httpProxyConfiguration.isAuthRequired()) {
+                BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(
+                        new AuthScope(httpProxyConfiguration.getProxyHost(), httpProxyConfiguration
+                                .getProxyPort()),
+                        new UsernamePasswordCredentials(httpProxyConfiguration.getUsername(),
+                                httpProxyConfiguration.getPassword()));
+                clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+            }
 
+            clientBuilder.setProxy(new HttpHost(httpProxyConfiguration.getProxyHost(),
+                    httpProxyConfiguration.getProxyPort()));
+        }
+
+        HttpComponentsClientHttpRequestFactory factory =
+                new HttpComponentsClientHttpRequestFactory(clientBuilder.build());
+
+        factory.setReadTimeout(getDefaultReadTimeout());
+
+        return factory;
+    }
+    
 	public OauthClient createOauthClient(URL authorizationUrl, HttpProxyConfiguration httpProxyConfiguration, boolean trustSelfSignedCerts) {
 		return new OauthClient(authorizationUrl, createRestTemplate(httpProxyConfiguration, trustSelfSignedCerts));
-	}
-
-	private void registerSslSocketFactory(HttpClient httpClient)  {
-		try {
-			SSLSocketFactory socketFactory = new SSLSocketFactory(new TrustSelfSignedStrategy(), STRICT_HOSTNAME_VERIFIER);
-			httpClient.getConnectionManager().getSchemeRegistry().register(new Scheme("https", 443, socketFactory));
-		} catch (GeneralSecurityException gse) {
-			throw new RuntimeException("An error occurred setting up the SSLSocketFactory", gse);
-		}
 	}
 
 	private List<HttpMessageConverter<?>> getHttpMessageConverters() {
@@ -110,4 +119,12 @@ public class RestUtil {
 		partConverters.add(new UploadApplicationPayloadHttpMessageConverter());
 		return partConverters;
 	}
+	
+    private static int getDefaultReadTimeout() {
+        try {
+            return new Socket().getSoTimeout();
+        } catch (SocketException e) {
+            return 0;
+        }
+    }
 }

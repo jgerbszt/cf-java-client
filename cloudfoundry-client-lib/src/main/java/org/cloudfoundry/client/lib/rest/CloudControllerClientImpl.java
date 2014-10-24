@@ -19,8 +19,6 @@ package org.cloudfoundry.client.lib.rest;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.Socket;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -358,11 +356,9 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 	private class CloudFoundryClientHttpRequestFactory implements ClientHttpRequestFactory {
 
 		private ClientHttpRequestFactory delegate;
-		private Integer defaultSocketTimeout = 0;
 
 		public CloudFoundryClientHttpRequestFactory(ClientHttpRequestFactory delegate) {
 			this.delegate = delegate;
-			captureDefaultReadTimeout();
 		}
 
 		@Override
@@ -381,23 +377,6 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 			return request;
 		}
 
-		private void captureDefaultReadTimeout() {
-			if (delegate instanceof HttpComponentsClientHttpRequestFactory) {
-				HttpComponentsClientHttpRequestFactory httpRequestFactory =
-						(HttpComponentsClientHttpRequestFactory) delegate;
-				defaultSocketTimeout = (Integer) httpRequestFactory
-						.getHttpClient().getParams()
-						.getParameter("http.socket.timeout");
-				if (defaultSocketTimeout == null) {
-					try {
-						defaultSocketTimeout = new Socket().getSoTimeout();
-					} catch (SocketException e) {
-						defaultSocketTimeout = 0;
-					}
-				}
-			}
-		}
-
 		public void increaseReadTimeoutForStreamedTailedLogs(int timeout) {
 			// May temporary increase read timeout on other unrelated concurrent
 			// threads, but per-request read timeout don't seem easily
@@ -408,9 +387,6 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 
 				if (timeout > 0) {
 					httpRequestFactory.setReadTimeout(timeout);
-				} else {
-					httpRequestFactory
-							.setReadTimeout(defaultSocketTimeout);
 				}
 			}
 		}

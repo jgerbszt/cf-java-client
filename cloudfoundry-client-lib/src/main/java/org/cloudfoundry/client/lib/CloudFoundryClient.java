@@ -542,4 +542,20 @@ public class CloudFoundryClient implements CloudFoundryOperations {
 		cc.updateQuota(quota, name);
 	}
 
+	public void addUserToOrg(String orgName, UUID userGuid) {
+	    cc.addUserToOrg(orgName, userGuid);
+	}
+
+    public void addManagerToOrg(String orgName, UUID userGuid) {
+        cc.addManagerToOrg(orgName, userGuid);
+    }
+
+    public void createUser(UUID userGuid) {
+        cc.createUser(userGuid);
+    }
+
+    @Override
+    public void addOrganization(String orgName) {
+        cc.addOrganization(orgName);
+    }
 }

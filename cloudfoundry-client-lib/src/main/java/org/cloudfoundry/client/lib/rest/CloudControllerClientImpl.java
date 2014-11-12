@@ -2092,4 +2092,68 @@ public class CloudControllerClientImpl implements CloudControllerClient {
 		}
 
 	}
+
+    @Override
+    public void addUserToOrg(String orgName, UUID userGuid) {
+        assignToOrganization(orgName, userGuid, "users");
+    }
+
+    @Override
+    public void addManagerToOrg(String orgName, UUID userGuid) {
+        assignToOrganization(orgName, userGuid, "managers");
+    }
+
+    public void assignToOrganization(String orgName, UUID userGuid, String role) {
+        CloudOrganization org = this.getOrgByName(orgName, true);
+
+        String setPath = "/v2/organizations/{org}/"+role+"/{user}";
+        Map<String, Object> setVars = new HashMap<String, Object>();
+        setVars.put("org", org.getMeta().getGuid());
+        setVars.put("user", userGuid);
+
+        getRestTemplate().put(getUrl(setPath), null, setVars);
+    }
+
+    @Override
+    public void createUser(UUID userGuid) {
+        Assert.notNull(userGuid, "User GUID must not be null");
+
+        HashMap<String, Object> serviceRequest = new HashMap<String, Object>();
+        serviceRequest.put("guid", userGuid);
+        getRestTemplate().postForObject(getUrl("/v2/users"), serviceRequest, String.class);
+    }
+
+    @Override
+    public void addOrganization(String orgName) {
+        UUID orgGuid = getOrganizationGuid(orgName, false);
+        if (orgGuid == null) {
+            doCreateOrganization(orgName);
+        }
+    }
+
+    private UUID getOrganizationGuid(String orgName, boolean required) {
+        Map<String, Object> urlVars = new HashMap<String, Object>();
+        String urlPath = "/v2/organizations?q=name:{name}";
+        urlVars.put("name", orgName);
+        List<Map<String, Object>> resourceList = getAllResources(urlPath, urlVars);
+        UUID orgGuid = null;
+        if (resourceList.size() > 0) {
+            Map<String, Object> resource = resourceList.get(0);
+            orgGuid = resourceMapper.getGuidOfResource(resource);
+        }
+        if (orgGuid == null && required) {
+            throw new IllegalArgumentException("Organzation '" + orgName + "' not found.");
+        }
+        return orgGuid;
+    }
+
+    private UUID doCreateOrganization(String orgName) {
+        String urlPath = "/v2/organizations";
+        HashMap<String, Object> orgRequest = new HashMap<String, Object>();
+        orgRequest.put("name", orgName);
+        String resp = getRestTemplate().postForObject(getUrl(urlPath), orgRequest, String.class);
+        Map<String, Object> respMap = JsonUtil.convertJsonToMap(resp);
+        return resourceMapper.getGuidOfResource(respMap);
+    }
+
 }

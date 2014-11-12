@@ -234,4 +234,12 @@ public interface CloudControllerClient {
     void deleteQuota(String quotaName);
     
     void setQuotaToOrg(String orgName, String quotaName);
+    
+    void addUserToOrg(String orgName, UUID userGuid);
+
+    void createUser(UUID userGuid);
+
+    void addManagerToOrg(String orgName, UUID userGuid);
+
+    void addOrganization(String orgName);
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.cloudfoundry.client.lib.archive.ApplicationArchive;
 import org.cloudfoundry.client.lib.domain.ApplicationLog;
@@ -741,4 +742,12 @@ public interface CloudFoundryOperations {
 	 * @param name
 	 */
 	void updateQuota(CloudQuota quota, String name);
+	
+	void addUserToOrg(String orgName, UUID userGuid);
+	
+	void addManagerToOrg(String orgName, UUID userGuid);
+
+	void createUser(UUID userGuid);
+
+    void addOrganization(String orgName);
 }

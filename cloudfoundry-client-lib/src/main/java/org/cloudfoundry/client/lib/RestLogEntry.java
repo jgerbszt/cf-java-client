@@ -17,6 +17,7 @@
 package org.cloudfoundry.client.lib;
 
 import java.net.URI;
+import java.time.LocalTime;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -33,13 +34,17 @@ public class RestLogEntry {
 	private String status;
 	private HttpStatus httpStatus;
 	private String message;
-
-	public RestLogEntry(HttpMethod method, URI uri, String status, HttpStatus httpStatus, String message) {
+	private final long duration;
+	private final String time;
+	
+	public RestLogEntry(HttpMethod method, URI uri, String status, HttpStatus httpStatus, String message, long duration) {
 		this.method = method;
 		this.uri = uri;
 		this.status = status;
 		this.httpStatus = httpStatus;
 		this.message = message;
+		this.duration = duration;
+		this.time = LocalTime.now().toString();
 	}
 
 	public HttpMethod getMethod() {
@@ -60,5 +65,13 @@ public class RestLogEntry {
 
 	public String getMessage() {
 		return message;
+	}
+	
+	public long getDuration() {
+		return duration;
+	}
+	
+	public String getTime() {
+		return time;
 	}
 }

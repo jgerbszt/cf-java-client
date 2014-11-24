@@ -50,6 +50,7 @@ public class LoggingRestTemplate extends RestTemplate {
 		final String[] message = new String[1];
 		T results = null;
 		RestClientException exception = null;
+		long time = System.currentTimeMillis();
 		try {
 			results = super.doExecute(url, method, requestCallback,
 					new ResponseExtractor<T>() {
@@ -83,15 +84,15 @@ public class LoggingRestTemplate extends RestTemplate {
 				httpStatus[0] = ((HttpStatusCodeException)e).getStatusCode();
 			}
 		}
-		addLogMessage(method, url, status[0], httpStatus[0], message[0]);
+		addLogMessage(method, url, status[0], httpStatus[0], message[0], System.currentTimeMillis() - time);
 		if (exception != null) {
 			throw exception;
 		}
 		return results;
 	}
 
-	public void addLogMessage(HttpMethod method, URI url, String status, HttpStatus httpStatus, String message) {
-		RestLogEntry logEntry = new RestLogEntry(method, url, status, httpStatus, message);
+	public void addLogMessage(HttpMethod method, URI url, String status, HttpStatus httpStatus, String message, long duration) {
+		RestLogEntry logEntry = new RestLogEntry(method, url, status, httpStatus, message, duration);
 		for (RestLogCallback callback : listeners) {
 			callback.onNewLogEntry(logEntry);
 		}

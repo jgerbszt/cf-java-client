@@ -30,7 +30,7 @@ import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJacksonHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -99,7 +99,7 @@ public class RestUtil {
 		messageConverters.add(new ResourceHttpMessageConverter());
 		messageConverters.add(new UploadApplicationPayloadHttpMessageConverter());
 		messageConverters.add(getFormHttpMessageConverter());
-		messageConverters.add(new MappingJacksonHttpMessageConverter());
+		messageConverters.add(new MappingJackson2HttpMessageConverter());
 		return messageConverters;
 	}
 
